@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetForge — Kit de Ingeniería de Redes y Ciberdefensa</title>
+<meta name="description" content="Herramienta de subnetting IPv4/IPv6, diseño de topologías y generación de configuraciones Cisco, Huawei, Fortinet y MikroTik.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1116;
+    --bg-raised:#141922;
+    --panel:#161B22;
+    --panel-2:#1C2330;
+    --border:#262E3D;
+    --border-soft:#1E2530;
+    --text:#E6EDF3;
+    --text-dim:#8B96A5;
+    --text-faint:#5B6577;
+    --accent:#F2A93C;
+    --accent-dim:#8A6420;
+    --accent-2:#4FD1A5;
+    --accent-2-dim:#245C48;
+    --danger:#F2545B;
+    --danger-dim:#5C2529;
+    --info:#5FA8E0;
+    --radius:6px;
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    display:grid;
+    grid-template-columns:216px 1fr;
+    grid-template-rows:100vh;
+  }
+  /* ---------- SIDEBAR ---------- */
+  #sidebar{
+    background:var(--bg-raised);
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+  }
+  .brand{
+    padding:22px 20px 16px 20px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .brand-mark{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  .brand-mark svg{flex:0 0 auto;}
+  .brand-name{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:-0.02em;
+    color:var(--text);
+  }
+  .brand-name span{color:var(--accent);}
+  .version-badge{
+    display:inline-block;
+    margin-top:8px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--accent-2);
+    background:var(--accent-2-dim);
+    border:1px solid #2E7A5F;
+    padding:2px 7px;
+    border-radius:4px;
+    letter-spacing:0.02em;
+  }
+  nav.tabs{
+    padding:14px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    flex:1;
+  }
+  .tab-group-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--text-faint);
+    padding:14px 10px 6px 10px;
+  }
+  .tab-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 10px;
+    border-radius:var(--radius);
+    color:var(--text-dim);
+    background:transparent;
+    border:1px solid transparent;
+    cursor:pointer;
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:500;
+    text-align:left;
+    width:100%;
+  }
+  .tab-btn:hover{background:var(--panel-2); color:var(--text);}
+  .tab-btn.active{
+    background:var(--panel);
+    border-color:var(--border);
+    color:var(--text);
+  }
+  .tab-btn.active .tab-dot{background:var(--accent);}
+  .tab-dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--text-faint);
+    flex:0 0 auto;
+  }
+  .sidebar-footer{
+    padding:14px 20px 18px 20px;
+    border-top:1px solid var(--border-soft);
+    font-size:11px;
+    color:var(--text-faint);
+    font-family:var(--mono);
+  }
+  /* ---------- MAIN ---------- */
+  #main{
+    overflow-y:auto;
+    height:100vh;
+  }
+  .view{display:none; padding:32px 40px 60px 40px; max-width:1180px;}
+  .view.active{display:block;}
+  .view-header{margin-bottom:26px;}
+  .eyebrow-row{
+    display:flex; align-items:center; gap:10px;
+    color:var(--text-faint);
+    font-family:var(--mono);
+    font-size:11.5px;
+    margin-bottom:6px;
+  }
+  h1.view-title{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0 0 8px 0;
+  }
+  .view-desc{color:var(--text-dim); max-width:680px; font-size:14px;}
+
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media (max-width:920px){ .grid-2{grid-template-columns:1fr;} .grid-3{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:20px;
+  }
+  .card h3{
+    margin:0 0 14px 0;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--text-dim);
+    font-weight:600;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  label{
+    display:block;
+    font-size:12px;
+    color:var(--text-dim);
+    margin-bottom:5px;
+    font-weight:500;
+  }
+  input[type=text], input[type=number], select, textarea{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px 10px;
+    border-radius:5px;
+    font-family:var(--mono);
+    font-size:13px;
+    margin-bottom:12px;
+  }
+  select{font-family:var(--sans);}
+  input:focus, select:focus, textarea:focus, button:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+    border-color:var(--accent);
+  }
+  .field-row{display:flex; gap:10px;}
+  .field-row > div{flex:1;}
+  .btn{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:5px;
+    font-family:var(--sans);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn:hover{border-color:#3A4558;}
+  .btn-primary{background:var(--accent); border-color:var(--accent); color:#1A1204;}
+  .btn-primary:hover{background:#F5B85E;}
+  .btn-ghost{background:transparent;}
+  .btn-danger{background:transparent; border-color:var(--danger-dim); color:var(--danger);}
+  .btn-sm{padding:5px 10px; font-size:12px;}
+  .btn:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .result-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; margin-top:4px;}
+  .result-item{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:8px 0; border-bottom:1px dashed var(--border-soft);
+    font-size:13px;
+  }
+  .result-item .k{color:var(--text-dim);}
+  .result-item .v{font-family:var(--mono); color:var(--text); font-weight:600; text-align:right;}
+  .v.good{color:var(--accent-2);}
+  .v.warn{color:var(--danger);}
+
+  pre.output{
+    background:#0A0D12;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:14px 16px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.6;
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-height:480px;
+    overflow-y:auto;
+    color:#C9D6E3;
+  }
+  table.data-table{width:100%; border-collapse:collapse; font-size:12.5px; font-family:var(--mono);}
+  table.data-table th{
+    text-align:left; color:var(--text-faint); font-weight:600;
+    text-transform:uppercase; font-size:10.5px; letter-spacing:0.05em;
+    padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  table.data-table td{padding:7px 10px; border-bottom:1px solid var(--border-soft); color:var(--text);}
+  table.data-table tr:hover td{background:var(--panel-2);}
+  .scroll-table{max-height:360px; overflow-y:auto; border:1px solid var(--border); border-radius:6px;}
+
+  .pill{
+    display:inline-block; padding:2px 9px; border-radius:20px;
+    font-size:11px; font-weight:600; font-family:var(--mono);
+  }
+  .pill-ok{background:var(--accent-2-dim); color:var(--accent-2); border:1px solid #2E7A5F;}
+  .pill-warn{background:var(--danger-dim); color:var(--danger); border:1px solid #7A2E33;}
+  .pill-info{background:#1C3049; color:var(--info); border:1px solid #2E5A7A;}
+
+  .toast{
+    position:fixed; bottom:22px; right:22px;
+    background:var(--panel-2); border:1px solid var(--accent-2);
+    color:var(--text); padding:10px 16px; border-radius:6px;
+    font-size:13px; font-family:var(--sans); font-weight:500;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    opacity:0; transform:translateY(8px); transition:all 0.2s ease;
+    pointer-events:none; z-index:999;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  .checklist{list-style:none; margin:0; padding:0;}
+  .checklist li{
+    display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-soft);
+    font-size:13.5px; align-items:flex-start;
+  }
+  .checklist li input{width:auto; margin:3px 0 0 0;}
+  .checklist .cl-title{font-weight:600; color:var(--text);}
+  .checklist .cl-desc{color:var(--text-dim); font-size:12.5px; margin-top:2px;}
+
+  #topo-canvas-wrap{
+    border:1px solid var(--border); border-radius:8px; background:#0A0D12;
+    position:relative; overflow:hidden;
+  }
+  #topo-svg{width:100%; height:520px; display:block; cursor:crosshair;}
+  .topo-toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .topo-node-label{
+    font-family:var(--mono); font-size:10px; fill:var(--text); pointer-events:none;
+  }
+  .device-swatch{width:12px; height:12px; border-radius:3px; display:inline-block;}
+
+  code.inline{
+    background:var(--panel-2); border:1px solid var(--border);
+    padding:1px 6px; border-radius:4px; font-family:var(--mono); font-size:12px;
+  }
+  .note-box{
+    background:#1C2330; border:1px solid var(--border); border-left:3px solid var(--info);
+    padding:12px 14px; border-radius:0 6px 6px 0; font-size:12.5px; color:var(--text-dim);
+  }
+  .note-box.warn{border-left-color:var(--danger);}
+  .divider{height:1px; background:var(--border-soft); margin:22px 0;}
+  .flex-between{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  ::-webkit-scrollbar{width:9px; height:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#2A3342; border-radius:5px;}
+  @media (max-width:760px){
+    #app{grid-template-columns:1fr; grid-template-rows:auto 1fr;}
+    #sidebar{border-right:none; border-bottom:1px solid var(--border); flex-direction:row; overflow-x:auto; height:auto;}
+    .brand{border-bottom:none; border-right:1px solid var(--border-soft);}
+    nav.tabs{flex-direction:row; padding:10px;}
+    .tab-group-label{display:none;}
+    .sidebar-footer{display:none;}
+    .view{padding:20px;}
+    .grid-2, .grid-3{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 12h4M16 12h4M10 12h4M4 6h6M14 6h6M4 18h6M14 18h6" stroke="#F2A93C" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="brand-name">Net<span>Forge</span></span>
+      </div>
+      <span class="version-badge" id="version-badge">v0.1.0</span>
+    </div>
+    <nav class="tabs">
+      <div class="tab-group-label">Direccionamiento</div>
+      <button class="tab-btn active" data-tab="ipv4"><span class="tab-dot"></span>Subnetting IPv4</button>
+      <button class="tab-btn" data-tab="ipv6"><span class="tab-dot"></span>Subnetting IPv6</button>
+      <div class="tab-group-label">Infraestructura</div>
+      <button class="tab-btn" data-tab="topo"><span class="tab-dot"></span>Topología</button>
+      <button class="tab-btn" data-tab="config"><span class="tab-dot"></span>Generador de config.</button>
+      <div class="tab-group-label">Seguridad</div>
+      <button class="tab-btn" data-tab="hardening"><span class="tab-dot"></span>Ciberdefensa</button>
+      <div class="tab-group-label">Proyecto</div>
+      <button class="tab-btn" data-tab="about"><span class="tab-dot"></span>Versión y changelog</button>
+    </nav>
+    <div class="sidebar-footer">MIT License<br>Uso bajo su propia responsabilidad</div>
+  </aside>
+  <main id="main">
+    <!-- Views injected below -->
+    <section class="view active" id="view-ipv4">
+      <div class="view-header">
+        <div class="eyebrow-row">Direccionamiento · IPv4</div>
+        <h1 class="view-title">Calculadora de subnetting IPv4</h1>
+        <p class="view-desc">Cálculo exacto de red, broadcast, rango de host y división en subredes por número de redes o por hosts requeridos.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Entrada</h3>
+          <label for="v4-ip">Dirección IP</label>
+          <input type="text" id="v4-ip" placeholder="192.168.10.0" value="192.168.10.0">
+          <div class="field-row">
+            <div>
+              <label for="v4-mode">Especificar con</label>
+              <select id="v4-mode">
+                <option value="cidr">Prefijo CIDR (/n)</option>
+                <option value="mask">Máscara decimal</option>
+              </select>
+            </div>
+            <div id="v4-cidr-wrap">
+              <label for="v4-cidr">Prefijo CIDR</label>
+              <input type="number" id="v4-cidr" min="0" max="32" value="24">
+            </div>
+            <div id="v4-mask-wrap" style="display:none;">
+              <label for="v4-mask">Máscara</label>
+              <input type="text" id="v4-mask" placeholder="255.255.255.0">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="v4-calc-btn" style="width:100%; justify-content:center;">Calcular</button>
+          <div id="v4-error" class="note-box warn" style="display:none; margin-top:12px;"></div>
+        </div>
+        <div class="card">
+          <h3>Resultado <span class="pill pill-ok" id="v4-class-pill">—</span></h3>
+          <div class="result-grid" id="v4-results"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card">
+        <h3>División en subredes</h3>
+        <div class="field-row">
+          <div>
+            <label for="v4-split-type">Dividir por</label>
+            <select id="v4-split-type">
+              <option value="subnets">Número de subredes necesarias</option>
+              <option value="hosts">Hosts necesarios por subred</option>
+            </select>
+          </div>
+          <div>
+            <label for="v4-split-value">Cantidad</label>
+            <input type="number" id="v4-split-value" min="1" value="4">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn" id="v4-split-btn" style="margin-bottom:12px;">Generar subredes</button>
+          </div>
+        </div>
+        <div class="flex-between" style="margin-bottom:10px;">
+          <span class="note-box" id="v4-split-summary" style="flex:1;">Ingresa una red válida y calcula primero.</span>
+          <button class="btn btn-sm btn-ghost" id="v4-split-export" style="display:none;">Exportar CSV</button>
+        </div>
+        <div class="scroll-table">
+          <table class="data-table" id="v4-split-table">
+            <thead><tr><th>#</th><th>Red</th><th>Máscara /CIDR</th><th>Primer host</th><th>Último host</th><th>Broadcast</th><th>Hosts útiles</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-ipv6">
+      <div class="view-header">
+        <div class="eyebrow-row">Direccionamiento · IPv6</div>
+        <h1 class="view-title">Calculadora de subnetting IPv6</h1>
+        <p class="view-desc">Expansión, compresión y segmentación de prefijos IPv6 usando aritmética de 128 bits.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Entrada</h3>
+          <label for="v6-addr">Dirección / prefijo</label>
+          <input type="text" id="v6-addr" placeholder="2001:db8:acad::" value="2001:db8:acad::">
+          <label for="v6-prefix">Longitud de prefijo</label>
+          <input type="number" id="v6-prefix" min="0" max="128" value="48">
+          <button class="btn btn-primary" id="v6-calc-btn" style="width:100%; justify-content:center;">Calcular</button>
+          <div id="v6-error" class="note-box warn" style="display:none; margin-top:12px;"></div>
+        </div>
+        <div class="card">
+          <h3>Resultado</h3>
+          <div class="result-grid" id="v6-results"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card">
+        <h3>División en subredes /n</h3>
+        <div class="field-row">
+          <div>
+            <label for="v6-new-prefix">Nuevo prefijo de subred</label>
+            <input type="number" id="v6-new-prefix" min="0" max="128" value="64">
+          </div>
+          <div>
+            <label for="v6-split-count">Máximo de subredes a listar</label>
+            <input type="number" id="v6-split-count" min="1" max="1000" value="16">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn" id="v6-split-btn" style="margin-bottom:12px;">Generar subredes</button>
+          </div>
+        </div>
+        <span class="note-box" id="v6-split-summary" style="display:block; margin-bottom:10px;">Ingresa un prefijo válido y calcula primero.</span>
+        <div class="scroll-table">
+          <table class="data-table" id="v6-split-table">
+            <thead><tr><th>#</th><th>Subred (comprimida)</th><th>Dirección inicial</th><th>Dirección final</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-topo">
+      <div class="view-header">
+        <div class="eyebrow-row">Infraestructura · Topología</div>
+        <h1 class="view-title">Constructor de topología</h1>
+        <p class="view-desc">Ubica dispositivos, conéctalos y exporta la topología como JSON reutilizable o como base para el generador de configuraciones.</p>
+      </div>
+      <div class="topo-toolbar">
+        <select id="topo-device-type">
+          <option value="router">Router</option>
+          <option value="switch">Switch</option>
+          <option value="firewall">Firewall</option>
+          <option value="server">Servidor</option>
+          <option value="pc">Host / PC</option>
+        </select>
+        <button class="btn" id="topo-add-mode">➕ Agregar dispositivo</button>
+        <button class="btn" id="topo-link-mode">🔗 Modo enlace</button>
+        <button class="btn btn-danger" id="topo-delete-mode">✖ Eliminar</button>
+        <button class="btn btn-ghost" id="topo-clear">🗑 Limpiar todo</button>
+        <span style="flex:1;"></span>
+        <button class="btn btn-ghost" id="topo-export">Exportar JSON</button>
+        <button class="btn btn-ghost" id="topo-import-btn">Importar JSON</button>
+        <input type="file" id="topo-import-file" accept="application/json" style="display:none;">
+      </div>
+      <div id="topo-canvas-wrap">
+        <svg id="topo-svg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="note-box" id="topo-hint" style="margin-top:12px;">Modo activo: <strong>Agregar dispositivo</strong>. Haz clic sobre el lienzo para colocar un nodo.</div>
+
+      <div class="divider"></div>
+
+      <div class="card">
+        <h3>Inventario de dispositivos</h3>
+        <div class="scroll-table">
+          <table class="data-table" id="topo-inventory">
+            <thead><tr><th>Nombre</th><th>Tipo</th><th>Fabricante</th><th>IP de gestión</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-config">
+      <div class="view-header">
+        <div class="eyebrow-row">Infraestructura · Generador</div>
+        <h1 class="view-title">Generador de configuraciones</h1>
+        <p class="view-desc">Plantillas para Cisco IOS, Huawei VRP, Fortinet FortiOS y MikroTik RouterOS. Revisa siempre el script generado antes de aplicarlo en un equipo de producción.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Parámetros</h3>
+          <div class="field-row">
+            <div>
+              <label for="cfg-vendor">Fabricante</label>
+              <select id="cfg-vendor">
+                <option value="cisco">Cisco IOS</option>
+                <option value="huawei">Huawei VRP</option>
+                <option value="fortinet">Fortinet FortiOS</option>
+                <option value="mikrotik">MikroTik RouterOS</option>
+              </select>
+            </div>
+            <div>
+              <label for="cfg-task">Tipo de configuración</label>
+              <select id="cfg-task">
+                <option value="base">Base + hostname</option>
+                <option value="vlan">VLAN + interfaz</option>
+                <option value="l3-interface">Interfaz enrutada (IP)</option>
+                <option value="static-route">Ruta estática</option>
+                <option value="ospf">OSPF básico</option>
+                <option value="acl">ACL / política de firewall</option>
+                <option value="hardening">Baseline de hardening</option>
+              </select>
+            </div>
+          </div>
+          <div id="cfg-dynamic-fields"></div>
+          <button class="btn btn-primary" id="cfg-generate-btn" style="width:100%; justify-content:center; margin-top:6px;">Generar script</button>
+        </div>
+        <div class="card">
+          <h3>Script generado
+            <span>
+              <button class="btn btn-sm" id="cfg-copy-btn">Copiar</button>
+              <button class="btn btn-sm" id="cfg-download-btn">Descargar .txt</button>
+            </span>
+          </h3>
+          <pre class="output" id="cfg-output">-- El script generado aparecerá aquí --</pre>
+        </div>
+      </div>
+      <div class="note-box warn" style="margin-top:20px;">Estas plantillas son puntos de partida educativos y operativos de uso general. No reemplazan una revisión de diseño ni las políticas de cambio de tu organización. Valida VLANs, direccionamiento y ACLs contra tu documentación real antes de desplegar.</div>
+    </section>
+
+    <section class="view" id="view-hardening">
+      <div class="view-header">
+        <div class="eyebrow-row">Seguridad · Ciberdefensa</div>
+        <h1 class="view-title">Lineamientos de ciberdefensa y hardening</h1>
+        <p class="view-desc">Checklist de buenas prácticas defensivas y generación de un baseline de endurecimiento por fabricante. Contenido puramente defensivo: no incluye técnicas de explotación ni de intrusión.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Checklist de defensa en profundidad</h3>
+          <ul class="checklist" id="hardening-checklist"></ul>
+        </div>
+        <div class="card">
+          <h3>Baseline de hardening por fabricante</h3>
+          <label for="hard-vendor">Fabricante</label>
+          <select id="hard-vendor">
+            <option value="cisco">Cisco IOS</option>
+            <option value="huawei">Huawei VRP</option>
+            <option value="fortinet">Fortinet FortiOS</option>
+            <option value="mikrotik">MikroTik RouterOS</option>
+          </select>
+          <button class="btn btn-primary" id="hard-generate-btn" style="width:100%; justify-content:center;">Generar baseline</button>
+          <div class="flex-between" style="margin-top:14px;">
+            <h3 style="margin:0;">Script</h3>
+            <span>
+              <button class="btn btn-sm" id="hard-copy-btn">Copiar</button>
+              <button class="btn btn-sm" id="hard-download-btn">Descargar .txt</button>
+            </span>
+          </div>
+          <pre class="output" id="hard-output" style="margin-top:10px;">-- El baseline generado aparecerá aquí --</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="card">
+        <h3>Marco de referencia</h3>
+        <p class="view-desc" style="max-width:none;">Estos lineamientos resumen prácticas ampliamente reconocidas por marcos como <strong>NIST CSF</strong>, <strong>CIS Controls</strong> e <strong>ISO/IEC 27001</strong>, adaptadas a dispositivos de red y perímetro. Úsalos como punto de partida para tu propia política de seguridad; no sustituyen una auditoría formal ni un análisis de riesgos específico de tu organización.</p>
+      </div>
+    </section>
+
+    <section class="view" id="view-about">
+      <div class="view-header">
+        <div class="eyebrow-row">Proyecto · Control de versiones</div>
+        <h1 class="view-title">NetForge <span id="about-version" style="color:var(--accent);">v0.1.0</span></h1>
+        <p class="view-desc">Herramienta de un solo archivo HTML, pensada para versionarse en GitHub siguiendo Versionado Semántico (SemVer).</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Estado actual</h3>
+          <div class="result-grid">
+            <div class="result-item"><span class="k">Versión</span><span class="v good">0.1.0</span></div>
+            <div class="result-item"><span class="k">Estado</span><span class="v"><span class="pill pill-info">En desarrollo activo</span></span></div>
+            <div class="result-item"><span class="k">Licencia</span><span class="v">MIT</span></div>
+            <div class="result-item"><span class="k">Dependencias externas</span><span class="v">Ninguna (JS/CSS/SVG nativos)</span></div>
+          </div>
+          <div class="note-box" style="margin-top:14px;">Ninguna herramienta de software es infalible. NetForge se somete a pruebas manuales sobre casos límite conocidos (CIDR /0, /31, /32, IPv6 comprimido, etc.), pero siempre valida los cálculos y scripts críticos antes de usarlos en producción.</div>
+        </div>
+        <div class="card">
+          <h3>Historial de cambios</h3>
+          <div id="changelog-list"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="card">
+        <h3>Hoja de ruta (roadmap)</h3>
+        <ul class="checklist">
+          <li><input type="checkbox" disabled><div><div class="cl-title">v0.2.0 — Import/export de topología a diagramas .drawio</div><div class="cl-desc">Interoperabilidad con herramientas externas de diagramación.</div></div></li>
+          <li><input type="checkbox" disabled><div><div class="cl-title">v0.3.0 — Validador de configuraciones</div><div class="cl-desc">Chequeo de sintaxis básica antes de exportar el script.</div></div></li>
+          <li><input type="checkbox" disabled><div><div class="cl-title">v1.0.0 — Perfiles guardables y multi-topología</div><div class="cl-desc">Persistencia local de proyectos completos.</div></div></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+window.NF = { version: "0.1.0" };
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function copyToClipboard(text){
+  navigator.clipboard.writeText(text).then(()=>toast('Copiado al portapapeles')).catch(()=>toast('No se pudo copiar'));
+}
+function downloadText(filename, text){
+  const blob = new Blob([text], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* =========================================================
+   IPv4 ENGINE
+========================================================= */
+const IPv4 = {
+  parse(ip){
+    const parts = ip.trim().split('.');
+    if(parts.length !== 4) throw new Error('La IP debe tener 4 octetos separados por puntos.');
+    const octs = parts.map(p=>{
+      if(!/^\d{1,3}$/.test(p)) throw new Error('Octeto inválido: "'+p+'".');
+      const n = parseInt(p,10);
+      if(n<0 || n>255) throw new Error('Cada octeto debe estar entre 0 y 255.');
+      return n;
+    });
+    return ((octs[0]<<24) | (octs[1]<<16) | (octs[2]<<8) | octs[3]) >>> 0;
+  },
+  toString(int){
+    return [(int>>>24)&255,(int>>>16)&255,(int>>>8)&255,int&255].join('.');
+  },
+  toBinary(int){
+    return int.toString(2).padStart(32,'0').match(/.{1,8}/g).join('.');
+  },
+  cidrToMaskInt(cidr){
+    return cidr===0 ? 0 : (0xFFFFFFFF << (32-cidr)) >>> 0;
+  },
+  maskIntToCidr(maskInt){
+    let bin = maskInt.toString(2).padStart(32,'0');
+    if(!/^1*0*$/.test(bin)) throw new Error('La máscara no es contigua/válida.');
+    return (bin.match(/1/g) || []).length;
+  },
+  isValidMaskString(maskStr){
+    try{
+      const m = IPv4.parse(maskStr);
+      IPv4.maskIntToCidr(m);
+      return true;
+    }catch(e){ return false; }
+  },
+  classify(int){
+    const first = (int>>>24)&255;
+    if(first < 128) return 'A';
+    if(first < 192) return 'B';
+    if(first < 224) return 'C';
+    if(first < 240) return 'D (Multicast)';
+    return 'E (Experimental)';
+  },
+  isPrivate(int){
+    const a=(int>>>24)&255, b=(int>>>16)&255;
+    if(a===10) return true;
+    if(a===172 && b>=16 && b<=31) return true;
+    if(a===192 && b===168) return true;
+    if(a===169 && b===254) return 'link-local';
+    if(a===127) return 'loopback';
+    return false;
+  },
+  compute(ipInt, cidr){
+    const mask = IPv4.cidrToMaskInt(cidr);
+    const network = (ipInt & mask) >>> 0;
+    const wildcard = (~mask) >>> 0;
+    const broadcast = (network | wildcard) >>> 0;
+    const total = Math.pow(2, 32-cidr);
+    let firstHost, lastHost, usable;
+    if(cidr === 32){ firstHost = network; lastHost = network; usable = 1; }
+    else if(cidr === 31){ firstHost = network; lastHost = broadcast; usable = 2; }
+    else { firstHost = (network+1)>>>0; lastHost = (broadcast-1)>>>0; usable = total-2; }
+    return {network, mask, wildcard, broadcast, total, firstHost, lastHost, usable, cidr};
+  }
+};
+
+function v4Recalc(){
+  const errBox = document.getElementById('v4-error');
+  errBox.style.display='none';
+  const ipStr = document.getElementById('v4-ip').value;
+  const mode = document.getElementById('v4-mode').value;
+  let cidr;
+  try{
+    const ipInt = IPv4.parse(ipStr);
+    if(mode === 'cidr'){
+      cidr = parseInt(document.getElementById('v4-cidr').value,10);
+      if(isNaN(cidr) || cidr<0 || cidr>32) throw new Error('El prefijo CIDR debe estar entre 0 y 32.');
+    } else {
+      const maskStr = document.getElementById('v4-mask').value;
+      const maskInt = IPv4.parse(maskStr);
+      cidr = IPv4.maskIntToCidr(maskInt);
+    }
+    const r = IPv4.compute(ipInt, cidr);
+    const cls = IPv4.classify(ipInt);
+    const priv = IPv4.isPrivate(ipInt);
+    document.getElementById('v4-class-pill').textContent = 'Clase '+cls;
+    const rg = document.getElementById('v4-results');
+    rg.innerHTML = [
+      ['Dirección ingresada', IPv4.toString(ipInt)],
+      ['Dirección de red', IPv4.toString(r.network)],
+      ['Máscara', IPv4.toString(r.mask)+' (/'+r.cidr+')'],
+      ['Wildcard', IPv4.toString(r.wildcard)],
+      ['Dirección de broadcast', IPv4.toString(r.broadcast)],
+      ['Primer host útil', IPv4.toString(r.firstHost)],
+      ['Último host útil', IPv4.toString(r.lastHost)],
+      ['Total de direcciones', r.total.toLocaleString('es')],
+      ['Hosts utilizables', r.usable.toLocaleString('es')],
+      ['Tipo', priv===true?'Privada (RFC 1918)': priv==='link-local'?'Link-local (APIPA)': priv==='loopback'?'Loopback':'Pública'],
+      ['Binario de red', IPv4.toBinary(r.network)],
+    ].map(([k,v])=>`<div class="result-item"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+    window.__v4Last = {ipInt, cidr, r};
+    document.getElementById('v4-split-summary').textContent = 'Red base: '+IPv4.toString(r.network)+'/'+r.cidr+'. Define abajo cómo dividirla.';
+  }catch(e){
+    errBox.textContent = e.message;
+    errBox.style.display='block';
+    window.__v4Last = null;
+  }
+}
+document.getElementById('v4-mode').addEventListener('change', (e)=>{
+  document.getElementById('v4-cidr-wrap').style.display = e.target.value==='cidr' ? 'block':'none';
+  document.getElementById('v4-mask-wrap').style.display = e.target.value==='mask' ? 'block':'none';
+});
+document.getElementById('v4-calc-btn').addEventListener('click', v4Recalc);
+
+document.getElementById('v4-split-btn').addEventListener('click', ()=>{
+  if(!window.__v4Last){ toast('Calcula primero una red válida.'); return; }
+  const {r} = window.__v4Last;
+  const type = document.getElementById('v4-split-type').value;
+  const value = parseInt(document.getElementById('v4-split-value').value,10);
+  if(isNaN(value) || value<1){ toast('Ingresa una cantidad válida.'); return; }
+
+  let newCidr, count;
+  if(type === 'subnets'){
+    const bitsNeeded = Math.ceil(Math.log2(value));
+    newCidr = r.cidr + bitsNeeded;
+    if(newCidr > 32){ toast('No hay espacio suficiente para esa cantidad de subredes.'); return; }
+    count = Math.pow(2, newCidr - r.cidr);
+  } else {
+    const hostsPlus2 = value + 2;
+    const bitsForHosts = Math.max(2, Math.ceil(Math.log2(hostsPlus2)));
+    newCidr = 32 - bitsForHosts;
+    if(newCidr < r.cidr){ toast('Esa cantidad de hosts no cabe en la red base.'); return; }
+    count = Math.pow(2, newCidr - r.cidr);
+  }
+  const blockSize = Math.pow(2, 32-newCidr);
+  const rows = [];
+  const maxShow = Math.min(count, 1024);
+  for(let i=0;i<maxShow;i++){
+    const netInt = (r.network + i*blockSize) >>> 0;
+    const sub = IPv4.compute(netInt, newCidr);
+    rows.push(`<tr><td>${i+1}</td><td>${IPv4.toString(sub.network)}</td><td>/${newCidr} (${IPv4.toString(sub.mask)})</td><td>${IPv4.toString(sub.firstHost)}</td><td>${IPv4.toString(sub.lastHost)}</td><td>${IPv4.toString(sub.broadcast)}</td><td>${sub.usable.toLocaleString('es')}</td></tr>`);
+  }
+  document.querySelector('#v4-split-table tbody').innerHTML = rows.join('');
+  document.getElementById('v4-split-summary').textContent =
+    `Se generaron ${count.toLocaleString('es')} subredes /${newCidr}` + (count>maxShow? ` (mostrando las primeras ${maxShow})`:'') + `.`;
+  document.getElementById('v4-split-export').style.display = 'inline-flex';
+  window.__v4SplitRows = {newCidr, count, blockSize, network: r.network};
+});
+
+document.getElementById('v4-split-export').addEventListener('click', ()=>{
+  if(!window.__v4SplitRows) return;
+  const {newCidr, count, blockSize, network} = window.__v4SplitRows;
+  const maxShow = Math.min(count, 1024);
+  let csv = 'Numero,Red,CIDR,Mascara,PrimerHost,UltimoHost,Broadcast,HostsUtiles\n';
+  for(let i=0;i<maxShow;i++){
+    const netInt = (network + i*blockSize) >>> 0;
+    const sub = IPv4.compute(netInt, newCidr);
+    csv += `${i+1},${IPv4.toString(sub.network)},/${newCidr},${IPv4.toString(sub.mask)},${IPv4.toString(sub.firstHost)},${IPv4.toString(sub.lastHost)},${IPv4.toString(sub.broadcast)},${sub.usable}\n`;
+  }
+  downloadText('subredes_ipv4.csv', csv);
+});
+
+/* =========================================================
+   IPv6 ENGINE (128-bit via BigInt)
+========================================================= */
+const IPv6 = {
+  MAX: (1n<<128n) - 1n,
+  parse(addr){
+    let a = addr.trim();
+    if(a === '') throw new Error('Ingresa una dirección IPv6.');
+    if(!/^[0-9a-fA-F:]+$/.test(a)) throw new Error('Caracteres no válidos para IPv6.');
+    if((a.match(/::/g)||[]).length > 1) throw new Error('Solo se permite un "::" en la dirección.');
+    let head, tail;
+    if(a.includes('::')){
+      [head, tail] = a.split('::');
+    } else {
+      head = a; tail = '';
+    }
+    const headParts = head === '' ? [] : head.split(':');
+    const tailParts = tail === '' ? [] : tail.split(':');
+    headParts.concat(tailParts).forEach(g=>{
+      if(g.length>4 || !/^[0-9a-fA-F]{1,4}$/.test(g)) throw new Error('Grupo hexadecimal inválido: "'+g+'".');
+    });
+    const totalGiven = headParts.length + tailParts.length;
+    if(a.includes('::')){
+      if(totalGiven > 7) throw new Error('Demasiados grupos para usar "::" (máximo 7 explícitos).');
+    } else if(totalGiven !== 8){
+      throw new Error('Una dirección IPv6 completa necesita 8 grupos, o usar "::" para abreviar.');
+    }
+    const missing = 8 - totalGiven;
+    const fullGroups = headParts.concat(new Array(missing).fill('0')).concat(tailParts);
+    let big = 0n;
+    for(const g of fullGroups){
+      big = (big << 16n) | BigInt(parseInt(g||'0',16));
+    }
+    return big;
+  },
+  toGroups(big){
+    const groups = [];
+    for(let i=7;i>=0;i--){
+      groups.push(Number((big >> BigInt(i*16)) & 0xFFFFn).toString(16));
+    }
+    return groups;
+  },
+  compress(big){
+    const groups = IPv6.toGroups(big);
+    // find longest run of consecutive "0" groups (length >= 2)
+    let bestStart=-1, bestLen=0, curStart=-1, curLen=0;
+    for(let i=0;i<8;i++){
+      if(groups[i]==='0'){
+        if(curStart===-1) curStart=i;
+        curLen++;
+        if(curLen>bestLen){bestLen=curLen; bestStart=curStart;}
+      } else { curStart=-1; curLen=0; }
+    }
+    if(bestLen < 2){
+      return groups.join(':');
+    }
+    const before = groups.slice(0,bestStart);
+    const after = groups.slice(bestStart+bestLen);
+    return before.join(':') + '::' + after.join(':');
+  },
+  expand(big){
+    return IPv6.toGroups(big).map(g=>g.padStart(4,'0')).join(':');
+  },
+  maskFor(prefix){
+    if(prefix===0) return 0n;
+    return (((1n<<BigInt(prefix)) - 1n) << BigInt(128-prefix)) & IPv6.MAX;
+  },
+  compute(addrBig, prefix){
+    const mask = IPv6.maskFor(prefix);
+    const network = addrBig & mask;
+    const last = network | (~mask & IPv6.MAX);
+    const totalAddresses = 1n << BigInt(128-prefix);
+    return {network, last, mask, totalAddresses};
+  }
+};
+
+function v6Recalc(){
+  const errBox = document.getElementById('v6-error');
+  errBox.style.display='none';
+  try{
+    const addrStr = document.getElementById('v6-addr').value;
+    const prefix = parseInt(document.getElementById('v6-prefix').value,10);
+    if(isNaN(prefix) || prefix<0 || prefix>128) throw new Error('El prefijo debe estar entre 0 y 128.');
+    const big = IPv6.parse(addrStr);
+    const r = IPv6.compute(big, prefix);
+    const rg = document.getElementById('v6-results');
+    rg.innerHTML = [
+      ['Dirección (comprimida)', IPv6.compress(big)],
+      ['Dirección (expandida)', IPv6.expand(big)],
+      ['Prefijo de red', IPv6.compress(r.network)+'/'+prefix],
+      ['Red (expandida)', IPv6.expand(r.network)],
+      ['Última dirección del bloque', IPv6.compress(r.last)],
+      ['Total de direcciones', r.totalAddresses.toString()],
+      ['ID de interfaz (últimos 64 bits)', (big & ((1n<<64n)-1n)).toString(16).padStart(16,'0')],
+    ].map(([k,v])=>`<div class="result-item"><span class="k">${k}</span><span class="v" style="font-size:12px;">${v}</span></div>`).join('');
+    window.__v6Last = {big, prefix, r};
+    document.getElementById('v6-split-summary').textContent = 'Prefijo base: '+IPv6.compress(r.network)+'/'+prefix+'.';
+  }catch(e){
+    errBox.textContent = e.message;
+    errBox.style.display='block';
+    window.__v6Last = null;
+  }
+}
+document.getElementById('v6-calc-btn').addEventListener('click', v6Recalc);
+
+document.getElementById('v6-split-btn').addEventListener('click', ()=>{
+  if(!window.__v6Last){ toast('Calcula primero un prefijo válido.'); return; }
+  const {prefix, r} = window.__v6Last;
+  const newPrefix = parseInt(document.getElementById('v6-new-prefix').value,10);
+  const maxList = parseInt(document.getElementById('v6-split-count').value,10) || 16;
+  if(isNaN(newPrefix) || newPrefix<0 || newPrefix>128){ toast('Prefijo de subred inválido.'); return; }
+  if(newPrefix < prefix){ toast('El nuevo prefijo debe ser mayor o igual al prefijo base (más específico).'); return; }
+  const blockSize = 1n << BigInt(128-newPrefix);
+  const countBig = 1n << BigInt(newPrefix-prefix);
+  const showCount = countBig < BigInt(maxList) ? Number(countBig) : Math.min(maxList,1000);
+  const rows = [];
+  for(let i=0;i<showCount;i++){
+    const netBig = r.network + BigInt(i)*blockSize;
+    const sub = IPv6.compute(netBig, newPrefix);
+    rows.push(`<tr><td>${i+1}</td><td>${IPv6.compress(sub.network)}/${newPrefix}</td><td>${IPv6.compress(sub.network)}</td><td>${IPv6.compress(sub.last)}</td></tr>`);
+  }
+  document.querySelector('#v6-split-table tbody').innerHTML = rows.join('');
+  document.getElementById('v6-split-summary').textContent =
+    `Total de subredes /${newPrefix} posibles: ${countBig.toString()}` + (countBig>BigInt(showCount) ? ` (mostrando ${showCount})`:'') + `.`;
+});
+
+/* =========================================================
+   TOPOLOGY BUILDER (SVG)
+========================================================= */
+const TOPO_COLORS = { router:'#F2A93C', switch:'#4FD1A5', firewall:'#F2545B', server:'#5FA8E0', pc:'#B18CF2' };
+const TOPO_ICONS = { router:'RT', switch:'SW', firewall:'FW', server:'SRV', pc:'PC' };
+
+const Topo = {
+  nodes: [],
+  links: [],
+  mode: 'add',
+  linkFirst: null,
+  nextId: 1,
+  svg: null,
+  init(){
+    this.svg = document.getElementById('topo-svg');
+    this.svg.addEventListener('click', (e)=>this.onCanvasClick(e));
+    document.getElementById('topo-add-mode').addEventListener('click', ()=>this.setMode('add'));
+    document.getElementById('topo-link-mode').addEventListener('click', ()=>this.setMode('link'));
+    document.getElementById('topo-delete-mode').addEventListener('click', ()=>this.setMode('delete'));
+    document.getElementById('topo-clear').addEventListener('click', ()=>this.clear());
+    document.getElementById('topo-export').addEventListener('click', ()=>this.exportJson());
+    document.getElementById('topo-import-btn').addEventListener('click', ()=>document.getElementById('topo-import-file').click());
+    document.getElementById('topo-import-file').addEventListener('change', (e)=>this.importJson(e));
+  },
+  setMode(m){
+    this.mode = m; this.linkFirst = null;
+    const hints = {
+      add:'Modo activo: <strong>Agregar dispositivo</strong>. Haz clic sobre el lienzo para colocar un nodo.',
+      link:'Modo activo: <strong>Enlace</strong>. Haz clic en un nodo y luego en otro para conectarlos.',
+      delete:'Modo activo: <strong>Eliminar</strong>. Haz clic en un nodo o enlace para borrarlo.'
+    };
+    document.getElementById('topo-hint').innerHTML = hints[m];
+  },
+  svgPoint(evt){
+    const pt = this.svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const ctm = this.svg.getScreenCTM().inverse();
+    const p = pt.matrixTransform(ctm);
+    return {x:p.x, y:p.y};
+  },
+  onCanvasClick(e){
+    if(e.target.closest('[data-node-id]') || e.target.closest('[data-link-id]')) return;
+    if(this.mode !== 'add') return;
+    const {x,y} = this.svgPoint(e);
+    const type = document.getElementById('topo-device-type').value;
+    const id = 'n'+(this.nextId++);
+    const count = this.nodes.filter(n=>n.type===type).length + 1;
+    this.nodes.push({id, type, x, y, name: type.toUpperCase()+'-'+count, vendor:'cisco', ip:''});
+    this.render();
+  },
+  onNodeClick(id, e){
+    e.stopPropagation();
+    if(this.mode === 'link'){
+      if(!this.linkFirst){ this.linkFirst = id; this.render(); }
+      else if(this.linkFirst !== id){
+        const exists = this.links.some(l=>(l.a===this.linkFirst&&l.b===id)||(l.a===id&&l.b===this.linkFirst));
+        if(!exists) this.links.push({id:'l'+Date.now(), a:this.linkFirst, b:id});
+        this.linkFirst = null;
+        this.render();
+      }
+    } else if(this.mode === 'delete'){
+      this.nodes = this.nodes.filter(n=>n.id!==id);
+      this.links = this.links.filter(l=>l.a!==id && l.b!==id);
+      this.render();
+    }
+  },
+  onLinkClick(id, e){
+    e.stopPropagation();
+    if(this.mode === 'delete'){
+      this.links = this.links.filter(l=>l.id!==id);
+      this.render();
+    }
+  },
+  startDrag(id, e){
+    if(this.mode !== 'add') return;
+    e.stopPropagation();
+    const node = this.nodes.find(n=>n.id===id);
+    const move = (ev)=>{
+      const {x,y} = this.svgPoint(ev);
+      node.x = Math.max(30,Math.min(970,x));
+      node.y = Math.max(30,Math.min(490,y));
+      this.render();
+    };
+    const up = ()=>{ window.removeEventListener('mousemove',move); window.removeEventListener('mouseup',up); };
+    window.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',up);
+  },
+  clear(){
+    if(this.nodes.length===0) return;
+    if(!confirm('¿Borrar toda la topología actual?')) return;
+    this.nodes=[]; this.links=[]; this.render();
+  },
+  render(){
+    const svg = this.svg;
+    svg.innerHTML = '';
+    const ns = 'http://www.w3.org/2000/svg';
+    // grid background
+    const defs = document.createElementNS(ns,'defs');
+    defs.innerHTML = `<pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M 24 0 L 0 0 0 24" fill="none" stroke="#161B22" stroke-width="1"/></pattern>`;
+    svg.appendChild(defs);
+    const bg = document.createElementNS(ns,'rect');
+    bg.setAttribute('width','1000'); bg.setAttribute('height','520'); bg.setAttribute('fill','url(#grid)');
+    svg.appendChild(bg);
+
+    this.links.forEach(l=>{
+      const a = this.nodes.find(n=>n.id===l.a), b = this.nodes.find(n=>n.id===l.b);
+      if(!a||!b) return;
+      const line = document.createElementNS(ns,'line');
+      line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+      line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+      line.setAttribute('stroke','#3A4558'); line.setAttribute('stroke-width','2');
+      line.setAttribute('data-link-id', l.id);
+      line.style.cursor='pointer';
+      line.addEventListener('click', (e)=>this.onLinkClick(l.id,e));
+      svg.appendChild(line);
+    });
+
+    this.nodes.forEach(n=>{
+      const g = document.createElementNS(ns,'g');
+      g.setAttribute('data-node-id', n.id);
+      g.style.cursor = this.mode==='add' ? 'grab':'pointer';
+      const circle = document.createElementNS(ns,'circle');
+      circle.setAttribute('cx',n.x); circle.setAttribute('cy',n.y); circle.setAttribute('r', 22);
+      circle.setAttribute('fill','#141922');
+      circle.setAttribute('stroke', this.linkFirst===n.id ? '#F2A93C' : TOPO_COLORS[n.type]);
+      circle.setAttribute('stroke-width', this.linkFirst===n.id ? 3 : 2);
+      g.appendChild(circle);
+      const label = document.createElementNS(ns,'text');
+      label.setAttribute('x',n.x); label.setAttribute('y',n.y+4);
+      label.setAttribute('text-anchor','middle');
+      label.setAttribute('class','topo-node-label');
+      label.setAttribute('fill', TOPO_COLORS[n.type]);
+      label.textContent = TOPO_ICONS[n.type];
+      g.appendChild(label);
+      const name = document.createElementNS(ns,'text');
+      name.setAttribute('x',n.x); name.setAttribute('y',n.y+38);
+      name.setAttribute('text-anchor','middle');
+      name.setAttribute('class','topo-node-label');
+      name.setAttribute('fill','#E6EDF3');
+      name.textContent = n.name;
+      g.appendChild(name);
+      g.addEventListener('click', (e)=>this.onNodeClick(n.id,e));
+      g.addEventListener('mousedown', (e)=>this.startDrag(n.id,e));
+      svg.appendChild(g);
+    });
+
+    this.renderInventory();
+  },
+  renderInventory(){
+    const tbody = document.querySelector('#topo-inventory tbody');
+    if(this.nodes.length===0){
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--text-faint);">Sin dispositivos aún.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = this.nodes.map(n=>`
+      <tr>
+        <td><input type="text" value="${n.name}" data-edit="name" data-id="${n.id}" style="margin:0; padding:4px 6px;"></td>
+        <td>${n.type}</td>
+        <td>
+          <select data-edit="vendor" data-id="${n.id}" style="margin:0; padding:4px 6px;">
+            <option value="cisco" ${n.vendor==='cisco'?'selected':''}>Cisco</option>
+            <option value="huawei" ${n.vendor==='huawei'?'selected':''}>Huawei</option>
+            <option value="fortinet" ${n.vendor==='fortinet'?'selected':''}>Fortinet</option>
+            <option value="mikrotik" ${n.vendor==='mikrotik'?'selected':''}>MikroTik</option>
+          </select>
+        </td>
+        <td><input type="text" value="${n.ip}" placeholder="10.0.0.1/24" data-edit="ip" data-id="${n.id}" style="margin:0; padding:4px 6px;"></td>
+        <td><button class="btn btn-sm btn-danger" data-remove="${n.id}">Quitar</button></td>
+      </tr>`).join('');
+    tbody.querySelectorAll('[data-edit]').forEach(el=>{
+      el.addEventListener('input', ()=>{
+        const node = this.nodes.find(n=>n.id===el.dataset.id);
+        if(node) node[el.dataset.edit] = el.value;
+        if(el.dataset.edit==='name') this.render();
+      });
+    });
+    tbody.querySelectorAll('[data-remove]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.dataset.remove;
+        this.nodes = this.nodes.filter(n=>n.id!==id);
+        this.links = this.links.filter(l=>l.a!==id && l.b!==id);
+        this.render();
+      });
+    });
+  },
+  exportJson(){
+    const data = {
+      netforge_version: window.NF.version,
+      exported_at: new Date().toISOString(),
+      nodes: this.nodes,
+      links: this.links
+    };
+    downloadText('topologia_netforge.json', JSON.stringify(data,null,2));
+    toast('Topología exportada');
+  },
+  importJson(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!Array.isArray(data.nodes) || !Array.isArray(data.links)) throw new Error('Formato inválido');
+        this.nodes = data.nodes; this.links = data.links;
+        this.nextId = this.nodes.length + 1;
+        this.render();
+        toast('Topología importada');
+      }catch(err){ toast('Archivo JSON inválido'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+};
+Topo.init();
+Topo.render();
+
+/* =========================================================
+   CONFIG GENERATOR — multi-vendor templates
+========================================================= */
+const CFG_FIELDS = {
+  base: [
+    {id:'hostname', label:'Hostname', type:'text', placeholder:'EDGE-RT01', default:'EDGE-RT01'},
+    {id:'mgmtIp', label:'IP de gestión (opcional)', type:'text', placeholder:'10.0.0.1/24'}
+  ],
+  vlan: [
+    {id:'vlanId', label:'VLAN ID', type:'number', default:'10'},
+    {id:'vlanName', label:'Nombre de VLAN', type:'text', default:'USERS'},
+    {id:'ifaceRange', label:'Interfaz(es) de acceso', type:'text', placeholder:'Gi0/1 (o rango)', default:'Gi0/1'}
+  ],
+  'l3-interface': [
+    {id:'ifaceName', label:'Nombre de interfaz', type:'text', placeholder:'GigabitEthernet0/1', default:'GigabitEthernet0/1'},
+    {id:'ip', label:'Dirección IP', type:'text', default:'192.168.10.1'},
+    {id:'cidr', label:'Prefijo CIDR', type:'number', default:'24'},
+    {id:'description', label:'Descripción', type:'text', placeholder:'Enlace a LAN usuarios'}
+  ],
+  'static-route': [
+    {id:'destNetwork', label:'Red destino', type:'text', default:'0.0.0.0'},
+    {id:'destCidr', label:'Prefijo destino', type:'number', default:'0'},
+    {id:'nextHop', label:'Next-hop / gateway', type:'text', default:'192.168.10.254'}
+  ],
+  ospf: [
+    {id:'ospfProcess', label:'Proceso / instancia OSPF', type:'text', default:'1'},
+    {id:'network', label:'Red a anunciar', type:'text', default:'192.168.10.0'},
+    {id:'wildcardOrCidr', label:'Wildcard (Cisco/Huawei) o CIDR', type:'text', default:'0.0.0.255'},
+    {id:'area', label:'Área', type:'text', default:'0'}
+  ],
+  acl: [
+    {id:'aclName', label:'Nombre / número de ACL', type:'text', default:'FILTER-IN'},
+    {id:'action', label:'Acción', type:'select', options:['permit','deny'], default:'permit'},
+    {id:'protocol', label:'Protocolo', type:'select', options:['ip','tcp','udp','icmp'], default:'tcp'},
+    {id:'source', label:'Origen', type:'text', default:'192.168.10.0/24'},
+    {id:'destination', label:'Destino', type:'text', default:'any'},
+    {id:'destPort', label:'Puerto destino (si aplica)', type:'text', placeholder:'443'}
+  ],
+  hardening: []
+};
+
+function renderCfgFields(){
+  const task = document.getElementById('cfg-task').value;
+  const wrap = document.getElementById('cfg-dynamic-fields');
+  const fields = CFG_FIELDS[task] || [];
+  if(fields.length===0){
+    wrap.innerHTML = '<div class="note-box">Este tipo de configuración no requiere parámetros adicionales; se usará el baseline estándar del fabricante seleccionado.</div>';
+    return;
+  }
+  wrap.innerHTML = fields.map(f=>{
+    if(f.type==='select'){
+      return `<label for="f-${f.id}">${f.label}</label><select id="f-${f.id}">${f.options.map(o=>`<option value="${o}" ${o===f.default?'selected':''}>${o}</option>`).join('')}</select>`;
+    }
+    return `<label for="f-${f.id}">${f.label}</label><input type="${f.type}" id="f-${f.id}" placeholder="${f.placeholder||''}" value="${f.default||''}">`;
+  }).join('');
+}
+document.getElementById('cfg-task').addEventListener('change', renderCfgFields);
+renderCfgFields();
+
+function getFieldValues(task){
+  const fields = CFG_FIELDS[task] || [];
+  const values = {};
+  fields.forEach(f=>{ const el = document.getElementById('f-'+f.id); values[f.id] = el ? el.value : ''; });
+  return values;
+}
+
+const VENDOR_LABELS = {cisco:'Cisco IOS', huawei:'Huawei VRP', fortinet:'Fortinet FortiOS', mikrotik:'MikroTik RouterOS'};
+
+function cidrToDottedMask(cidr){
+  cidr = parseInt(cidr,10) || 0;
+  const maskInt = cidr===0?0:(0xFFFFFFFF << (32-cidr))>>>0;
+  return [(maskInt>>>24)&255,(maskInt>>>16)&255,(maskInt>>>8)&255,maskInt&255].join('.');
+}
+function cidrToWildcard(cidr){
+  cidr = parseInt(cidr,10) || 0;
+  const maskInt = cidr===0?0:(0xFFFFFFFF << (32-cidr))>>>0;
+  const w = (~maskInt)>>>0;
+  return [(w>>>24)&255,(w>>>16)&255,(w>>>8)&255,w&255].join('.');
+}
+
+const CFG_TEMPLATES = {
+cisco: {
+  base: (v)=>`enable
+configure terminal
+hostname ${v.hostname||'EDGE-RT01'}
+no ip domain-lookup
+${v.mgmtIp? `interface Vlan1\n ip address ${v.mgmtIp.split('/')[0]} ${cidrToDottedMask(v.mgmtIp.split('/')[1]||'24')}\n no shutdown\n exit` : ''}
+banner motd # Acceso restringido - Solo personal autorizado #
+end
+write memory`,
+  vlan: (v)=>`configure terminal
+vlan ${v.vlanId}
+ name ${v.vlanName}
+ exit
+interface ${v.ifaceRange}
+ switchport mode access
+ switchport access vlan ${v.vlanId}
+ spanning-tree portfast
+ exit
+end
+write memory`,
+  'l3-interface': (v)=>`configure terminal
+interface ${v.ifaceName}
+ description ${v.description||'Configurado via NetForge'}
+ ip address ${v.ip} ${cidrToDottedMask(v.cidr)}
+ no shutdown
+ exit
+end
+write memory`,
+  'static-route': (v)=>`configure terminal
+ip route ${v.destNetwork} ${cidrToDottedMask(v.destCidr)} ${v.nextHop}
+end
+write memory`,
+  ospf: (v)=>`configure terminal
+router ospf ${v.ospfProcess}
+ network ${v.network} ${v.wildcardOrCidr} area ${v.area}
+ exit
+end
+write memory`,
+  acl: (v)=>`configure terminal
+ip access-list extended ${v.aclName}
+ ${v.action} ${v.protocol} ${v.source} ${v.destination}${v.destPort? ' eq '+v.destPort:''}
+ exit
+! Recuerda aplicar la ACL a la interfaz correspondiente:
+! interface <ID>
+!  ip access-group ${v.aclName} in
+end
+write memory`,
+  hardening: ()=>CFG_HARDENING.cisco()
+},
+huawei: {
+  base: (v)=>`system-view
+sysname ${v.hostname||'EDGE-RT01'}
+${v.mgmtIp? `interface Vlanif1\n ip address ${v.mgmtIp.split('/')[0]} ${cidrToDottedMask(v.mgmtIp.split('/')[1]||'24')}\n quit`:''}
+header shell information "Acceso restringido - Solo personal autorizado"
+quit
+save`,
+  vlan: (v)=>`system-view
+vlan batch ${v.vlanId}
+vlan ${v.vlanId}
+ description ${v.vlanName}
+ quit
+interface ${v.ifaceRange}
+ port link-type access
+ port default vlan ${v.vlanId}
+ quit
+save`,
+  'l3-interface': (v)=>`system-view
+interface ${v.ifaceName}
+ description ${v.description||'Configurado via NetForge'}
+ ip address ${v.ip} ${cidrToDottedMask(v.cidr)}
+ undo shutdown
+ quit
+save`,
+  'static-route': (v)=>`system-view
+ip route-static ${v.destNetwork} ${cidrToDottedMask(v.destCidr)} ${v.nextHop}
+save`,
+  ospf: (v)=>`system-view
+ospf ${v.ospfProcess}
+ area ${v.area}
+  network ${v.network} ${v.wildcardOrCidr}
+  quit
+ quit
+save`,
+  acl: (v)=>`system-view
+acl name ${v.aclName} advance
+ rule ${v.action} ${v.protocol==='ip'?'ip':v.protocol} source ${v.source} destination ${v.destination}${v.destPort? ' destination-port eq '+v.destPort:''}
+ quit
+! Aplica el ACL al tráfico o interfaz según tu diseño (traffic-filter / traffic policy).
+save`,
+  hardening: ()=>CFG_HARDENING.huawei()
+},
+fortinet: {
+  base: (v)=>`config system global
+    set hostname "${v.hostname||'EDGE-FW01'}"
+end
+${v.mgmtIp? `config system interface\n    edit "mgmt"\n        set ip ${v.mgmtIp.split('/')[0]} ${cidrToDottedMask(v.mgmtIp.split('/')[1]||'24')}\n    next\nend`:''}`,
+  vlan: (v)=>`config system interface
+    edit "vlan${v.vlanId}"
+        set vdom "root"
+        set interface "${v.ifaceRange}"
+        set vlanid ${v.vlanId}
+        set alias "${v.vlanName}"
+        set role lan
+    next
+end`,
+  'l3-interface': (v)=>`config system interface
+    edit "${v.ifaceName}"
+        set ip ${v.ip} ${cidrToDottedMask(v.cidr)}
+        set alias "${v.description||'Configurado via NetForge'}"
+        set allowaccess ping
+    next
+end`,
+  'static-route': (v)=>`config router static
+    edit 0
+        set dst ${v.destNetwork} ${cidrToDottedMask(v.destCidr)}
+        set gateway ${v.nextHop}
+    next
+end`,
+  ospf: (v)=>`config router ospf
+    set router-id 0.0.0.${v.ospfProcess||'1'}
+    config area
+        edit ${v.area==='0'?'0.0.0.0':v.area}
+        next
+    end
+    config network
+        edit 0
+            set prefix ${v.network} ${v.wildcardOrCidr}
+            set area ${v.area==='0'?'0.0.0.0':v.area}
+        next
+    end
+end`,
+  acl: (v)=>`config firewall policy
+    edit 0
+        set name "${v.aclName}"
+        set srcintf "any"
+        set dstintf "any"
+        set srcaddr "${v.source}"
+        set dstaddr "${v.destination}"
+        set action ${v.action==='permit'?'accept':'deny'}
+        set schedule "always"
+        set service "${v.protocol==='ip'?'ALL':v.protocol.toUpperCase()}"
+        set logtraffic all
+    next
+end`,
+  hardening: ()=>CFG_HARDENING.fortinet()
+},
+mikrotik: {
+  base: (v)=>`/system identity set name=${v.hostname||'EDGE-RT01'}
+${v.mgmtIp? `/ip address add address=${v.mgmtIp} interface=ether1`:''}
+/system note set note="Acceso restringido - Solo personal autorizado" show-at-login=yes`,
+  vlan: (v)=>`/interface vlan add name=vlan${v.vlanId} vlan-id=${v.vlanId} interface=${v.ifaceRange}
+/interface bridge port add bridge=bridge1 interface=vlan${v.vlanId}
+/ interface list add name=${v.vlanName}`,
+  'l3-interface': (v)=>`/ip address add address=${v.ip}/${v.cidr} interface=${v.ifaceName} comment="${v.description||'Configurado via NetForge'}"`,
+  'static-route': (v)=>`/ip route add dst-address=${v.destNetwork}/${v.destCidr} gateway=${v.nextHop}`,
+  ospf: (v)=>`/routing ospf instance add name=default-${v.ospfProcess} router-id=0.0.0.${v.ospfProcess||'1'}
+/routing ospf area add name=area${v.area} area-id=0.0.0.${v.area} instance=default-${v.ospfProcess}
+/routing ospf interface-template add area=area${v.area} networks=${v.network}/${(v.wildcardOrCidr||'24').replace(/[^0-9]/g,'')||'24'}`,
+  acl: (v)=>`/ip firewall filter add chain=forward action=${v.action==='permit'?'accept':'drop'} protocol=${v.protocol==='ip'?'':v.protocol} src-address=${v.source} dst-address=${v.destination}${v.destPort? ' dst-port='+v.destPort:''} comment="${v.aclName}"`,
+  hardening: ()=>CFG_HARDENING.mikrotik()
+}
+};
+
+const CFG_HARDENING = {
+cisco: ()=>`configure terminal
+service password-encryption
+no service pad
+no ip http server
+no ip http secure-server
+enable secret 0 CAMBIA_ESTA_CLAVE_FUERTE
+username admin_local privilege 15 secret 0 CAMBIA_ESTA_CLAVE_FUERTE
+aaa new-model
+login block-for 120 attempts 4 within 60
+ip ssh version 2
+ip ssh time-out 60
+line vty 0 4
+ transport input ssh
+ login local
+ exec-timeout 5 0
+ exit
+line con 0
+ exec-timeout 5 0
+ login local
+ exit
+banner motd # Acceso restringido. Toda actividad es monitoreada y registrada. #
+service timestamps log datetime msec localtime
+logging buffered 16384
+no cdp run
+end
+write memory`,
+huawei: ()=>`system-view
+undo telnet server enable
+stelnet server enable
+ssh user admin_local authentication-type password
+ssh user admin_local service-type stelnet
+aaa
+ local-user admin_local password irreversible-cipher CAMBIA_ESTA_CLAVE_FUERTE
+ local-user admin_local privilege level 15
+ local-user admin_local service-type ssh
+ quit
+user-interface vty 0 4
+ authentication-mode aaa
+ protocol inbound ssh
+ idle-timeout 5 0
+ quit
+header login information "Acceso restringido. Toda actividad es monitoreada."
+info-center enable
+info-center loghost 10.0.0.100
+save`,
+fortinet: ()=>`config system global
+    set admintimeout 5
+    set admin-https-redirect enable
+    set admin-ssh-port 22
+    set strong-crypto enable
+end
+config system interface
+    edit "mgmt"
+        set allowaccess https ssh ping
+    next
+end
+config system accprofile
+    edit "readonly-profile"
+        set secfabgrp read
+    next
+end
+config log setting
+    set log-invalid-packet enable
+end
+config log syslogd setting
+    set status enable
+    set server "10.0.0.100"
+end
+config user setting
+    set auth-lockout-threshold 4
+    set auth-lockout-duration 300
+end`,
+mikrotik: ()=>`/ip service disable telnet,ftp,www,api,api-ssl
+/ip service set ssh port=22
+/ip service set winbox address=10.0.0.0/24
+/ip ssh set strong-crypto=yes
+/user group add name=readonly policy=read,test,winbox
+/user set 0 password=CAMBIA_ESTA_CLAVE_FUERTE
+/system logging action add name=remote target=remote remote=10.0.0.100
+/system logging add topics=info,error,warning action=remote
+/ip firewall filter add chain=input connection-state=established,related action=accept comment="allow established"
+/ip firewall filter add chain=input protocol=icmp action=accept comment="allow ping"
+/ip firewall filter add chain=input action=drop comment="drop all other input"`
+};
+
+const CFG_HEADER = (vendor, task)=>{
+  const now = new Date().toISOString();
+  return `! ============================================================
+! Generado por NetForge v${window.NF.version} — ${now}
+! Fabricante: ${VENDOR_LABELS[vendor]}
+! Tipo: ${task}
+! Revisa y adapta antes de aplicar en un dispositivo real.
+! ============================================================
+`.replace(/^!/gm, vendor==='mikrotik' ? '#' : '!');
+};
+
+document.getElementById('cfg-generate-btn').addEventListener('click', ()=>{
+  const vendor = document.getElementById('cfg-vendor').value;
+  const task = document.getElementById('cfg-task').value;
+  const values = getFieldValues(task);
+  let script;
+  try{
+    script = CFG_HEADER(vendor, task) + '\n' + CFG_TEMPLATES[vendor][task](values);
+  }catch(e){
+    script = 'Ocurrió un error generando el script: '+e.message;
+  }
+  document.getElementById('cfg-output').textContent = script;
+  window.__cfgLast = script;
+});
+document.getElementById('cfg-copy-btn').addEventListener('click', ()=>{
+  if(window.__cfgLast) copyToClipboard(window.__cfgLast); else toast('Genera un script primero.');
+});
+document.getElementById('cfg-download-btn').addEventListener('click', ()=>{
+  if(!window.__cfgLast){ toast('Genera un script primero.'); return; }
+  const vendor = document.getElementById('cfg-vendor').value;
+  const task = document.getElementById('cfg-task').value;
+  downloadText(`config_${vendor}_${task}.txt`, window.__cfgLast);
+});
+
+/* =========================================================
+   HARDENING / CIBERDEFENSA
+========================================================= */
+const HARDENING_CHECKLIST = [
+  {t:'Gestión fuera de banda y cifrada', d:'Deshabilita Telnet/HTTP/FTP en favor de SSHv2 y HTTPS; restringe el acceso de gestión por IP de origen.'},
+  {t:'Control de acceso basado en roles (AAA)', d:'Usa cuentas nominales, no compartidas; aplica privilegios mínimos necesarios.'},
+  {t:'Políticas de contraseñas fuertes', d:'Longitud mínima, complejidad, rotación y bloqueo tras intentos fallidos (login block-for / auth-lockout).'},
+  {t:'Segmentación de red', d:'VLANs y zonas de firewall separadas para gestión, usuarios, servidores y DMZ.'},
+  {t:'Listas de control de acceso (ACLs) de mínimo privilegio', d:'Deniega por defecto; permite solo el tráfico explícitamente necesario.'},
+  {t:'Registro y monitoreo centralizado', d:'Syslog/SNMP hacia un colector central; conserva logs para análisis forense.'},
+  {t:'NTP sincronizado', d:'Todos los equipos con la misma hora para correlacionar eventos de seguridad.'},
+  {t:'Gestión de parches y versiones', d:'Mantén el software de red actualizado según el ciclo de vida del fabricante.'},
+  {t:'Respaldo de configuraciones', d:'Backups automáticos y versionados de configuraciones críticas.'},
+  {t:'Deshabilitar servicios no utilizados', d:'CDP/LLDP innecesario, proxy ARP, servicios de descubrimiento, puertos sin uso.'},
+  {t:'Plan de respuesta a incidentes', d:'Procedimiento documentado para aislar, contener y recuperar equipos comprometidos.'},
+  {t:'Autenticación multifactor donde sea posible', d:'Especialmente para accesos remotos y cuentas privilegiadas.'}
+];
+function renderHardeningChecklist(){
+  const ul = document.getElementById('hardening-checklist');
+  ul.innerHTML = HARDENING_CHECKLIST.map((c,i)=>`
+    <li>
+      <input type="checkbox" id="hc-${i}">
+      <div><label for="hc-${i}" class="cl-title" style="cursor:pointer;">${c.t}</label><div class="cl-desc">${c.d}</div></div>
+    </li>`).join('');
+}
+renderHardeningChecklist();
+
+document.getElementById('hard-generate-btn').addEventListener('click', ()=>{
+  const vendor = document.getElementById('hard-vendor').value;
+  const script = CFG_HEADER(vendor, 'hardening baseline') + '\n' + CFG_HARDENING[vendor]();
+  document.getElementById('hard-output').textContent = script;
+  window.__hardLast = script;
+});
+document.getElementById('hard-copy-btn').addEventListener('click', ()=>{
+  if(window.__hardLast) copyToClipboard(window.__hardLast); else toast('Genera un baseline primero.');
+});
+document.getElementById('hard-download-btn').addEventListener('click', ()=>{
+  if(!window.__hardLast){ toast('Genera un baseline primero.'); return; }
+  const vendor = document.getElementById('hard-vendor').value;
+  downloadText(`hardening_${vendor}.txt`, window.__hardLast);
+});
+
+/* =========================================================
+   CHANGELOG
+========================================================= */
+const CHANGELOG = [
+  {v:'0.1.0', date:'2026-09-25', items:[
+    'Lanzamiento inicial de NetForge.',
+    'Calculadora de subnetting IPv4 con división por número de subredes o por hosts.',
+    'Calculadora de subnetting IPv6 con aritmética de 128 bits (BigInt).',
+    'Constructor de topología interactivo con exportación/importación JSON.',
+    'Generador de configuraciones para Cisco IOS, Huawei VRP, Fortinet FortiOS y MikroTik RouterOS.',
+    'Módulo de ciberdefensa: checklist de hardening y generación de baseline por fabricante.'
+  ]}
+];
+function renderChangelog(){
+  document.getElementById('changelog-list').innerHTML = CHANGELOG.map(c=>`
+    <div style="margin-bottom:16px;">
+      <div class="flex-between" style="margin-bottom:6px;">
+        <span class="pill pill-ok">v${c.v}</span>
+        <span style="color:var(--text-faint); font-family:var(--mono); font-size:11.5px;">${c.date}</span>
+      </div>
+      <ul style="margin:0; padding-left:18px; color:var(--text-dim); font-size:13px;">
+        ${c.items.map(i=>`<li style="margin-bottom:4px;">${i}</li>`).join('')}
+      </ul>
+    </div>`).join('');
+}
+renderChangelog();
+</script>
+</body>
+</html>
